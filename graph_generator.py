@@ -14,7 +14,6 @@ from matplotlib.projections.polar import PolarAxes
 from matplotlib.spines import Spine
 from matplotlib.transforms import Affine2D
 
-
 EXISTING_SUPER_TYPES = ["legendary", "basic", "snow", "world"]
 EXISTING_CARD_TYPES = [
     "instant",
@@ -165,7 +164,7 @@ def spider(
     theta = radar_factory(9, frame="polygon")
 
     fig, axs = plt.subplots(
-        figsize=(18, 9), nrows=1, ncols=2, subplot_kw=dict(projection="radar")
+        figsize=(9, 9), nrows=2, ncols=2, subplot_kw=dict(projection="radar")
     )
     fig.subplots_adjust(wspace=0.25, hspace=0.20, top=0.85, bottom=0.05)
 
@@ -185,7 +184,7 @@ def spider(
             ax.fill(theta, d, facecolor=color, alpha=0.25, label="_nolegend_")
         ax.set_varlabels(spoke_labels)
 
-    axs[0].legend(labels, loc=(0.9, 0.95), labelspacing=0.1, fontsize="medium")
+    axs[0][0].legend(labels, loc=(0.9, 0.95), labelspacing=0.1, fontsize="large")
 
     plt.savefig(store_path)
 
@@ -202,6 +201,8 @@ def spider_data(decklist: list):
         [0 for _ in range(len(EXISTING_CARD_TYPES))],  # Green
         [0 for _ in range(len(EXISTING_CARD_TYPES))],  # Colorless
     ]
+    card_types = [0 for _ in range(9)]
+
     cmc_data = [
         [0 for _ in range(9)],  # White
         [0 for _ in range(9)],  # Blue
@@ -210,14 +211,16 @@ def spider_data(decklist: list):
         [0 for _ in range(9)],  # Green
         [0 for _ in range(9)],  # Colorless
     ]
+    cmc_distribution = [0 for _ in range(9)]
     for card_info in decklist:
         cmc = int(card_info["cmc"]) if card_info["cmc"] < 8 else 8
+        cmc_distribution[cmc] += 1
         for t in card_info["card_types"]:
             type_index = EXISTING_CARD_TYPES.index(t)
+            card_types[type_index] += 1
             if not card_info["colors"]:
                 color_data[-1][type_index] += 1
-                if t != "land":
-                    cmc_data[-1][cmc] += 1
+                cmc_data[-1][cmc] += 1
                 continue
             for color in card_info["colors"]:
                 color_data[MTG_COLORS.index(color)][type_index] += 1
@@ -225,10 +228,16 @@ def spider_data(decklist: list):
                     cmc_data[MTG_COLORS.index(color)][cmc] += 1
     data = [
         (EXISTING_CARD_TYPES.copy(), "Types by color", color_data),
+        (EXISTING_CARD_TYPES.copy(), "Type distribution", [card_types]),
         (
             ["0", "1", "2", "3", "4", "5", "6", "7", "8+"],
             "Mana Value by color",
             cmc_data,
+        ),
+        (
+            ["0", "1", "2", "3", "4", "5", "6", "7", "8+"],
+            "Mana Value distribution",
+            [cmc_distribution],
         ),
     ]
     return data, labels, colors
